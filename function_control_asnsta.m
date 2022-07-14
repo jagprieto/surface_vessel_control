@@ -15,7 +15,6 @@ function [tau, state_asnsta_control_new] = function_control_asnsta(time, referen
     GAMMA = function_calculate_known_dynamics(u, v, r, ROTATION_MATRIX, CONTROL_MATRIX);
 
     % Maneuverabiliy parameters
-    delta = 0.5;
     V0 = (abs(PARAMETERS.SIMULATION.INITIAL_STATE(1:3))).^(0.5);
     c2 = 2*V0*log(2)/settling_time;
     c1 = c2 ./ V0;
