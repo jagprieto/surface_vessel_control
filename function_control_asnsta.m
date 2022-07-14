@@ -16,7 +16,7 @@ function [tau, state_asnsta_control_new] = function_control_asnsta(time, referen
 
     % Maneuverabiliy parameters
     delta = 0.5;
-    V0 = (abs(PARAMETERS.SIMULATION.INITIAL_STATE(1:3))).^((1-delta)/2.0);
+    V0 = (abs(PARAMETERS.SIMULATION.INITIAL_STATE(1:3))).^(0.5);
     c2 = 2*V0*log(2)/settling_time;
     c1 = c2 ./ V0;
     lambdav = c1 + 0.5*c2/tanh(1);
