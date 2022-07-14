@@ -14,16 +14,16 @@ function [tau, state_asnsta_control_new] = function_control_asnsta(time, referen
     CONTROL_MATRIX_INVERSE = inv(CONTROL_MATRIX);
     GAMMA = function_calculate_known_dynamics(u, v, r, ROTATION_MATRIX, CONTROL_MATRIX);
 
-    % Maneoubrality parameters
-    e0 = [1.2; 1.2; pi/3];
-    c2 = (2*e0/settling_time)*log(2);
-    c1 = c2 ./ e0; 
+    % Maneuverabiliy parameters
+    delta = 0.5;
+    V0 = (abs(PARAMETERS.SIMULATION.INITIAL_STATE(1:3))).^((1-delta)/2.0);
+    c2 = 2*V0*log(2)/settling_time;
+    c1 = c2 ./ V0;
     lambdav = c1 + 0.5*c2/tanh(1);
     gammav = [1; 1; 1];
     kappav = 0.5*c2/tanh(1);
     
     % Read internal control states
-%     sigma_prev = state_asnsta_control(16:18);
     dot_sigma = state_asnsta_control(19:21);
     
     % ASNSTA parameters
@@ -36,8 +36,6 @@ function [tau, state_asnsta_control_new] = function_control_asnsta(time, referen
     p2 = (lambda.^2 +  alfa + 1) ./ (2*lambda.*alfa);
     XI = [max([0.5, p2(1,1)]); max([0.5, p2(2,1)]); max([0.5, p2(3,1)])];
     upsilon_sigma = 4.0*PARAMETERS.SIMULATION.DISTURBANCE_FREQUENCY_MAX.*XI./ sqrt(kappa);
-    %upsilon_ec = 0.1*abs(sigma_prev).*upsilon_sigma;
-%     upsilon_ec = 4.0*abs(sigma_prev).*abs(dot_sigma).*XI./ sqrt(kappa);
     upsilon_ec = 4.0.*abs(dot_sigma).*XI./ sqrt(kappa);
 
     % Read internal control states
@@ -108,8 +106,12 @@ function [tau, state_asnsta_control_new] = function_control_asnsta(time, referen
 
     % Update and save data
     zv = zv + dot_zv*PARAMETERS.SIMULATION.SAMPLING_TIME; 
-    dot_sigma = - lambda.*sigma - kappa.*tanh(gamma.*sigma) - epsilon_sigma;
 
+    % dot sigma estimation
+    ddot_ec = CONTROL_MATRIX*tau + GAMMA + epsilon_sigma - ddot_zv;
+    dot_sigma = ddot_ec + lambda.*dot_ec + kappa.*((sech(gamma.*ec)).^2).*dot_ec + dot_epsilon_ec; 
+
+    % Save control state data
     state_asnsta_control_new = state_asnsta_control;
     state_asnsta_control_new(1:3) = zv;
     state_asnsta_control_new(4:6) = epsilon_ec;
